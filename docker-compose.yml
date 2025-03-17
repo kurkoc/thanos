@@ -1,0 +1,62 @@
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    networks:
+      - thanos
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.min-block-duration=5m"
+      - "--storage.tsdb.max-block-duration=5m"
+      - "--storage.tsdb.retention.time=1h"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+    ports:
+      - "9090:9090"
+
+  thanos-sidecar:
+    image: thanosio/thanos:main-2025-03-17-d1345b9
+    container_name: sidecar
+    networks:
+      - thanos
+    command:
+      - "sidecar"
+      - "--tsdb.path=/prometheus"
+      - "--prometheus.url=http://prometheus:9090"
+      - "--objstore.config-file=/etc/thanos/storage-config.yaml"
+      - "--grpc-address=0.0.0.0:19191"
+      - "--http-address=0.0.0.0:19090"
+    ports:
+      - "19090:19090"
+      - "19191:19191"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./storage-config.yaml:/etc/thanos/storage-config.yaml
+    depends_on:
+      - prometheus
+
+  thanos-query:
+    image: thanosio/thanos:main-2025-03-17-d1345b9
+    container_name: query
+    networks:
+      - thanos
+    command:
+      - "query"
+      - "--endpoint=sidecar:19191"
+      - "--http-address=0.0.0.0:19192"
+    ports:
+      - "19192:19192"
+    depends_on:
+      - thanos-sidecar
+
+volumes:
+  prometheus-data:
+    external: true
+
+networks:
+  thanos:
+    external: true
