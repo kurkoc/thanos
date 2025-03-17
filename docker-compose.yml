@@ -19,7 +19,7 @@ services:
       - "9090:9090"
 
   thanos-sidecar:
-    image: thanosio/thanos:main-2025-03-17-d1345b9
+    image: thanosio/thanos:v0.37.2
     container_name: sidecar
     networks:
       - thanos
@@ -40,7 +40,7 @@ services:
       - prometheus
 
   thanos-query:
-    image: thanosio/thanos:main-2025-03-17-d1345b9
+    image: thanosio/thanos:v0.37.2
     container_name: query
     networks:
       - thanos
