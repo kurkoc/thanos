@@ -54,6 +54,22 @@ services:
     depends_on:
       - thanos-sidecar
 
+  thanos-compactor:
+    image: thanosio/thanos:v0.37.2
+    container_name: compactor
+    user: "0:0"
+    networks:
+      - thanos
+    command:
+      - "compact"
+      - "--data-dir=/var/thanos/compact"
+      - "--objstore.config-file=/etc/thanos/storage-config.yaml"
+      - "--http-address=0.0.0.0:19191"
+    volumes:
+      - ./storage-config.yaml:/etc/thanos/storage-config.yaml
+    ports:
+      - "19191:19191"
+
 volumes:
   prometheus-data:
     external: true
